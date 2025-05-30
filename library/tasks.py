@@ -18,3 +18,18 @@ def send_loan_notification(loan_id):
         )
     except Loan.DoesNotExist:
         pass
+
+@shared_task
+def check_for_overdue_loans_daily():
+    over_due_loans = Loan.objects.filter(is_returned=False, due_date__lt=timezone.now())
+    
+    for loan in over_due_loans:
+        member_email = loan.member.user.email
+        book_title = loan.book.title
+        send_mail(
+            subject='Overdue Book Notification',
+            message=f'Hello {loan.member.user.username},\n\nThe book "{book_title}" is overdue. Please return it as soon as possible.',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[member_email],
+            fail_silently=False,
+        )

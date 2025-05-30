@@ -49,6 +49,11 @@ class MemberViewSet(viewsets.ModelViewSet):
     queryset = Member.objects.all()
     serializer_class = MemberSerializer
 
+    @action(detail=True, methods=['get'])
+    def get_top_active_members(self, request, pk=None):
+        top_active_memebrs = Member.get_top_active_members()
+        return Response({'top_active_members': top_active_memebrs}, status=status.HTTP_200_OK)
+    
 class LoanViewSet(viewsets.ModelViewSet):
     queryset = Loan.objects.all()
     serializer_class = LoanSerializer

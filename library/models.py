@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
+from datetime import timedelta
 
 class Author(models.Model):
     first_name = models.CharField(max_length=100)
@@ -34,6 +36,11 @@ class Member(models.Model):
 
     def __str__(self):
         return self.user.username
+    
+    @staticmethod
+    def get_top_active_members():
+        # This method can be implemented to return top active members based on loan history or other criteria
+        return Member.objects.annotate(num_loans=models.Count('loans')).order_by('-num_loans')[:5]  
 
 class Loan(models.Model):
     book = models.ForeignKey(Book, related_name='loans', on_delete=models.CASCADE)
@@ -41,6 +48,12 @@ class Loan(models.Model):
     loan_date = models.DateField(auto_now_add=True)
     return_date = models.DateField(null=True, blank=True)
     is_returned = models.BooleanField(default=False)
+    due_date = models.DateField(blank =True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.due_date:
+            self.due_date = self.loan_date + timedelta(days=14)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.book.title} loaned to {self.member.user.username}"
